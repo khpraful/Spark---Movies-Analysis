@@ -1,0 +1,57 @@
+//Create RDDs from data files
+val ratings_rdd= sc.textFile("file:///<path to file>/ratings.dat")
+val users_rdd = sc.textFile("file:///<path to file>/users.dat")
+val movies_rdd = sc.textFile("file:///<path to file>/movies.dat")
+
+//Create Tuples from RDDs
+//Write Tuple functions
+def parseRatings(line:String) = {
+val splits = line.split("::")
+val UserID = splits(0).toInt
+val MovieID = splits(1).toInt
+val Rating = splits(2).toInt
+val Timestamp = splits(3).toString()
+(UserID,MovieID,Rating,Timestamp)
+}
+def parseUsers(line:String) = {
+val splits = line.split("::")
+val UserID = splits(0).toInt
+val Gender = splits(1).toString()
+val Age = splits(2).toInt
+val Occupation = splits(3).toString()
+val Zipcode = splits(4).toString()
+(UserID,Gender,Age,Occupation,Zipcode)
+}
+
+
+def parseMovies(line:String) = {
+val splits = line.split("::")
+val MovieID = splits(0).toInt
+val Title = splits(1).toString()
+val Genres = splits(2).toString()
+(MovieID,Title,Genres)
+}
+
+//Create Tuples
+val ratings_tuple= ratings_rdd.map(parseRatings)
+val users_tuple = users_rdd.map(parseUsers)
+val movies_tuple = movies_rdd.map(parseMovies)
+
+
+//Create Dataframes from Tuples
+val ratings_df = ratings_tuple.toDF("UserID", "MovieID", "Rating", "Timestamp")
+val users_df = users_tuple.toDF("UserID", "Gender", "Age", "Occupation","Zip-code")
+val movies_df = movies_tuple.toDF("MovieID", "Title", "Genres")
+
+//Create required Dataframe joins
+val movies_ratings_df = movies_df.join(ratings_df, Seq("MovieID"))
+val movies_ratings_users_df = movies_ratings_df.join(users_df,Seq("UserID"))
+
+//Write required queries
+movies_ratings_df.filter(movies_ratings_df("Genres").like("Animation%")).filter(movies_ratings_df("Rating") >= 4).select("Title").distinct().show()
+movies_ratings_users_df.groupBy("Genres","Gender").agg(mean("Rating"),count("Rating")).orderBy("Genres", "Gender").show()
+movies_ratings_users_df.groupBy("Age").agg(count("Rating")).orderBy("Age").show()
+movies_ratings_users_df.groupBy("Title").agg(mean("Rating")).orderBy("Title").show()
+movies_ratings_users_df.groupBy("Title").agg(mean("Rating")).orderBy(desc("avg(Rating)")).show()
+
+
