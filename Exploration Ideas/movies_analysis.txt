@@ -48,10 +48,15 @@ val movies_ratings_df = movies_df.join(ratings_df, Seq("MovieID"))
 val movies_ratings_users_df = movies_ratings_df.join(users_df,Seq("UserID"))
 
 //Write required queries
+//Find out the animated movies that are rated 4 or above
 movies_ratings_df.filter(movies_ratings_df("Genres").like("Animation%")).filter(movies_ratings_df("Rating") >= 4).select("Title").distinct().show()
+//Detect the gender bias on movie ratings for a genre
 movies_ratings_users_df.groupBy("Genres","Gender").agg(mean("Rating"),count("Rating")).orderBy("Genres", "Gender").show()
+//Group the ratings by age
 movies_ratings_users_df.groupBy("Age").agg(count("Rating")).orderBy("Age").show()
+//Find out the average rating for movies
 movies_ratings_users_df.groupBy("Title").agg(mean("Rating")).orderBy("Title").show()
+//Find out the titles of the best rated movies
 movies_ratings_users_df.groupBy("Title").agg(mean("Rating")).orderBy(desc("avg(Rating)")).show()
 
 
